@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<title>Typing Test Game – Exam & Practice Mode</title>
+
+<meta name="description" content="Free online typing test game with exam mode, levels, WPM, accuracy and grading system. Improve your typing speed now.">
+<meta name="keywords" content="typing test, typing game, wpm test, typing exam, keyboard practice">
+<meta name="author" content="Your Name">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box}
+
+body{
+ font-family:Arial, Helvetica, sans-serif;
+ background:#f4f6f8;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ min-height:100vh;
+ margin:0;
+}
+
+.container{
+ background:#fff;
+ width:95%;
+ max-width:900px;
+ padding:20px;
+ border-radius:10px;
+ box-shadow:0 4px 15px rgba(0,0,0,.15);
+}
+
+h1{text-align:center;margin-top:0}
+
+.paragraph{
+ background:#eef;
+ padding:15px;
+ border-radius:6px;
+ line-height:1.6;
+ margin-bottom:10px;
+ min-height:120px;
+}
+
+.correct{color:green}
+.incorrect{color:red;text-decoration:underline}
+
+textarea{
+ width:100%;
+ height:140px;
+ font-size:16px;
+ padding:10px;
+ resize:none;
+}
+
+textarea:disabled{
+ background:#f0f0f0;
+}
+
+.controls{
+ display:flex;
+ gap:10px;
+ flex-wrap:wrap;
+ margin-bottom:10px;
+ justify-content:center;
+}
+
+select,button{
+ padding:8px 12px;
+ font-size:15px;
+ cursor:pointer;
+}
+
+.stats{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+ gap:10px;
+ margin-top:10px;
+ text-align:center;
+ font-weight:bold;
+}
+
+.level{
+ margin-bottom:5px;
+ font-weight:bold;
+}
+
+footer{
+ text-align:center;
+ margin-top:15px;
+ font-size:13px;
+ color:#666;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>⌨️ Typing Test Game</h1>
+
+<div class="controls">
+<select id="examMode">
+ <option value="off">Practice Mode</option>
+ <option value="on">Exam Mode</option>
+</select>
+
+<select id="examTime">
+ <option value="60">1 Minute</option>
+ <option value="180">3 Minutes</option>
+ <option value="300">5 Minutes</option>
+</select>
+
+<select id="levelSelect">
+ <option value="easy">Easy</option>
+ <option value="medium">Medium</option>
+ <option value="hard">Hard</option>
+</select>
+
+<button onclick="startGame()">Start</button>
+<button onclick="restart()">Restart</button>
+</div>
+
+<div class="level">Level: <span id="levelText">Easy</span></div>
+
+<div class="paragraph" id="paragraph"></div>
+
+<textarea id="input" placeholder="Click Start to begin typing..." disabled></textarea>
+
+<div class="stats">
+ <div>⏱ Time: <span id="time">0</span>s</div>
+ <div>⚡ WPM: <span id="wpm">0</span></div>
+ <div>🎯 Accuracy: <span id="accuracy">0</span>%</div>
+</div>
+
+<footer>
+© 2026 Typing Test Game | Improve Your Typing Skills
+</footer>
+
+</div>
+
+<script>
+const paragraphs={
+ easy:`Typing is a basic yet important skill that helps people work faster and communicate more effectively.`,
+ medium:`Typing is an essential digital skill in today’s technology-driven world where productivity depends on speed and accuracy.`,
+ hard:`In modern academic and professional environments, advanced typing proficiency is a critical requirement under strict time limits.`
+};
+
+const para=document.getElementById("paragraph");
+const input=document.getElementById("input");
+const timeEl=document.getElementById("time");
+const wpmEl=document.getElementById("wpm");
+const accEl=document.getElementById("accuracy");
+const levelText=document.getElementById("levelText");
+
+let text="",level="easy",startTime=null,timer=null,examTimer=null,finished=false;
+
+function startGame(){
+ restart();
+ level=document.getElementById("levelSelect").value;
+ text=paragraphs[level];
+ levelText.innerText=level.toUpperCase();
+
+ para.innerHTML=text.split("").map(c=>`<span>${c}</span>`).join("");
+ input.disabled=false;
+ input.focus();
+
+ startTime=new Date();
+ timer=setInterval(updateTime,1000);
+
+ if(examMode.value==="on"){
+  let remaining=parseInt(examTime.value);
+  timeEl.innerText=remaining;
+  examTimer=setInterval(()=>{
+   remaining--;
+   timeEl.innerText=remaining;
+   if(remaining<=0) endExam();
+  },1000);
+ }
+}
+
+function updateTime(){
+ if(examMode.value==="off"){
+  timeEl.innerText=Math.floor((new Date()-startTime)/1000);
+ }
+}
+
+input.addEventListener("input",()=>{
+ if(!startTime||finished) return;
+
+ const val=input.value;
+ const spans=para.querySelectorAll("span");
+ let correct=0;
+
+ spans.forEach((s,i)=>{
+  if(val[i]==null) s.className="";
+  else if(val[i]===s.innerText){
+   s.className="correct"; correct++;
+  }else s.className="incorrect";
+ });
+
+ const minutes=(new Date()-startTime)/60000;
+ wpmEl.innerText=Math.floor((val.trim().split(/\s+/).length)/minutes||0);
+ accEl.innerText=((correct/val.length)*100||0).toFixed(0);
+
+ if(val===text) endExam();
+});
+
+function endExam(){
+ finished=true;
+ clearInterval(timer);
+ clearInterval(examTimer);
+ input.disabled=true;
+
+ const wpm=wpmEl.innerText;
+ const acc=accEl.innerText;
+ const grade=(wpm>=50&&acc>=90)?"A":(wpm>=35&&acc>=80)?"B":(wpm>=25&&acc>=65)?"C":"Fail";
+
+ alert(`RESULT\n\nLevel: ${level.toUpperCase()}\nWPM: ${wpm}\nAccuracy: ${acc}%\nGrade: ${grade}`);
+}
+
+function restart(){
+ input.value="";
+ input.disabled=true;
+ timeEl.innerText=0;
+ wpmEl.innerText=0;
+ accEl.innerText=0;
+ finished=false;
+ clearInterval(timer);
+ clearInterval(examTimer);
+ startTime=null;
+}
+
+para.innerHTML=paragraphs[level].split("").map(c=>`<span>${c}</span>`).join("");
+</script>
+
+</body>
+</html>
